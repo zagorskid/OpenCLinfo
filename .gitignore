@@ -229,3 +229,10 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+ReadMe.txt
+targetver.h
+stdafx.h
+stdafx.cpp
+OpenCLinfo.vcxproj
+OpenCLinfo.vcxproj.filters
+OpenCLinfoSingle.cpp
