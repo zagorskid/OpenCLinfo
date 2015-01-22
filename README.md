@@ -4,8 +4,8 @@ OpenCLinfo
 Simple program displaying basic info about available OpenCL platforms and devices 
 
 
-Sample output:
-===
+## Sample output:
+```
 OpenCL Platform & Device Info Tool
 
 OpenCL platforms found: 1
@@ -48,3 +48,4 @@ DEVICE LOCAL MEM SIZE: 32 kB
 DEVICE GLOBAL MEM SIZE: 8190 MB
 KERNEL PREFERRED WORK GROUP SIZE MULTIPLE: 1
 Press any key to continue . . .
+```
