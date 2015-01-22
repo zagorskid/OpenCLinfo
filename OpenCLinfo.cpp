@@ -50,16 +50,21 @@ int main(int argc, char* argv[])
 	cl_device_id device;
 	cl_platform_id platform;	
 
+	
+
 	for (cl_uint i = 0; i < num_platforms; ++i) 
 	{
-		platform = platforms[i];
+		platform = platforms[i];	
 
 		// platform info	
 		const int LEN = 10240;
 		char buffer[LEN]; 
 		cl_uint buf_uint = 0;
-		cl_ulong buf_ulong = 0;
+		cl_ulong buf_ulong = 0;				
+		cl_ulong buf_ulong_tab[3] = { 0 };
 		cl_device_type buf_type = 0;
+		size_t buf_sizet = 0;
+		size_t buf_sizet_tab[3] = { 0 };
 
 		cout << "\n### PLATFORM #" << i << " INFO: ###" << endl;
 		clGetPlatformInfo(platform, CL_PLATFORM_NAME, sizeof(buffer), buffer, NULL);
@@ -80,6 +85,18 @@ int main(int argc, char* argv[])
 		for (cl_uint j = 0; j < num_devices && status == CL_SUCCESS; ++j)
 		{
 			device = devices[j];
+			// empty kernel init
+			const cl_context_properties prop[] = { CL_CONTEXT_PLATFORM, (cl_context_properties)platform, 0 };
+			cl_context context = clCreateContextFromType(prop, deviceType, NULL, NULL, &status);
+			if (status != CL_SUCCESS) {
+				cout << "Creating context failed. Error code: " << status << endl;
+			}
+			cl_command_queue cmd_queue = clCreateCommandQueue(context, device, 0, &status);
+			const char *src = "__kernel void empty() {}";
+			cl_program program = clCreateProgramWithSource(context, 1, (const char**)&src, NULL, NULL);
+			status = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+			cl_kernel kernel = clCreateKernel(program, "empty", NULL);
+
 			cout << "\n### DEVICE #" << j << " INFO: ###" << endl;
 			clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(buf_type), &buf_type, NULL);
 			cout << "DEVICE TYPE: " << getDeviceTypeName(buf_type) << endl;
@@ -96,17 +113,22 @@ int main(int argc, char* argv[])
 			clGetDeviceInfo(device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(buf_uint), &buf_uint, NULL);
 			cout << "DEVICE MAX CLOCK FREQUENCY: " << (unsigned int)buf_uint << endl;
 			clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(buf_uint), &buf_uint, NULL);
-			cout << "DEVICE MAX WORK ITEM DIMENSIONS: " << (unsigned int)buf_uint << endl;
-			clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(buf_uint), &buf_uint, NULL);
-			cout << "DEVICE MAX WORK ITEM SIZES: " << (unsigned int)buf_uint << endl;
-			clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(buf_uint), &buf_uint, NULL);
-			cout << "DEVICE MAX WORK GROUP SIZE: " << (unsigned int)buf_uint << endl;
+			cout << "DEVICE MAX WORK ITEM DIMENSIONS: " << (unsigned int)buf_uint << endl;			
+			clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(buf_sizet_tab), &buf_sizet_tab, NULL);
+			cout << "DEVICE MAX WORK ITEM SIZES: " << buf_sizet_tab[0] << " " << buf_sizet_tab[1] << " " << buf_sizet_tab[2] << endl;
+			clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(buf_sizet), &buf_sizet, NULL);
+			cout << "DEVICE MAX WORK GROUP SIZE: " << (unsigned int)buf_sizet << endl;
 			clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(buf_ulong), &buf_ulong, NULL);
 			cout << "DEVICE LOCAL MEM SIZE: " << (unsigned long long)buf_ulong / 1024 << " kB" << endl;
 			clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buf_ulong), &buf_ulong, NULL);
-			cout << "DEVICE GLOBAL MEM SIZE: " << (unsigned long long)buf_ulong / (1024 * 1024) << " MB" << endl;
-			clGetDeviceInfo(device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(buf_uint), &buf_uint, NULL);
-			cout << "KERNEL PREFERRED WORK GROUP SIZE MULTIPLE: " << (unsigned int)buf_uint << endl;
+			cout << "DEVICE GLOBAL MEM SIZE: " << (unsigned long long)buf_ulong / (1024 * 1024) << " MB" << endl;			
+			clGetKernelWorkGroupInfo(kernel, device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(buf_sizet), &buf_sizet, NULL);
+			cout << "KERNEL PREFERRED WORK GROUP SIZE MULTIPLE: " << (unsigned int)buf_sizet << endl;
+
+			clReleaseKernel(kernel);
+			clReleaseProgram(program);
+			clReleaseCommandQueue(cmd_queue);
+			clReleaseContext(context);
 		}
 		
 		if (num_platforms > 1 && i != num_platforms - 1)
